@@ -1,0 +1,14 @@
+# User data
+.cache/
+.vscode/
+
+# venv
+venv/
+
+# Build files
+build/
+*.egg-info/
+
+# Pytest cache
+test/__pycache__/
+.pytest_cache/
