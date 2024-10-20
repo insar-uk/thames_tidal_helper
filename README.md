@@ -4,7 +4,7 @@ This script queries and interpolates (in time) tidal data from the Port of Londo
 
 ## Installation
 
-You just need the requests library. Whether that necessitates a new virtual environment is up to you!
+You just need the requests library really.
 
 ``` bash (linux)
 python -m venv venv
@@ -18,13 +18,21 @@ python -m venv venv
 pip install requests
 ```
 
+Install as follows:
+
+```
+pip install -e .
+```
+
 
 ## Usage
 
-This is currently python script not a module. Run it as follows:
+Run the script as follows:
 
 ``` bash
-python thames_tidal_data.py
+python -m thames_tidal_helper
+# with options:
+python -m thames_tidal_helper --input input.txt --output output.txt --site "Chelsea Bridge"
 ```
 
 ### Options:

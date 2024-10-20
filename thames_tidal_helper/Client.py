@@ -21,22 +21,66 @@ class API:
         
         return f"{API.root}{site_code}/{year}/{month}/{day}/0/1/"
     
+class TideEntry:
+    def __init__(self, time: datetime, type: str, height: float):
+        self.time = time
+        self.height = height
+        self.type = type
+
+    def __str__(self) -> str:
+        return f"{self.time}: {self.type} - {self.height}m"
+    
+    def __repr__(self) -> str:
+        return self.__str__()
+
 class DataPackage:
     def __init__(self, data: str):
         self.data = data
-        self.jsonData = json.loads(data)
-        self.table = self.jsonData["table"]
+        self.json_data = json.loads(data)
+        self.table = self.json_data["table"]
+
+    def parse(self) -> list[TideEntry]:
+        entries = []    
+        # go through each month in the table
+        for _, month_data in self.table.items():
+            # get the month and year from 'month['name']' which is in the format 'January 2021'
+            month_str, year_str = month_data['name'].split(" ")
+            # convert the month to a number
+            month = datetime.strptime(month_str, "%B").month
+            year = int(year_str)
+            
+            # go through each day in the month
+            for _, day_data in month_data["rows"].items():
+                # go through each entry in the day
+                for entry in day_data:
+                    day = entry["Day"]
+                    hour = int(entry["Time"][:2])
+                    minute = int(entry["Time"][2:])
+                    # time is in the format '2010' for 10 minutes past 8pm
+                    time = datetime(year, month, day, hour, minute)
+                    height = float(entry["Height"])
+                    type = "LOW" if entry["Type"] == 0 else "HIGH"
+                    entries.append(TideEntry(time, type, height))
+
+        return entries
 
 
-    def get_tidal_height(self, datetime: datetime) -> float:
-        # get the two nearest times to the datetime (before and after)
-        return 0.0
+
 
 
 class Quarter:
     def __init__(self, year: int, quarter: int):
         self.year = year
         self.quarter = quarter
+
+    def __eq__(self, other):
+        return self.year == other.year and self.quarter == other.quarter
+    
+    def __hash__(self):
+        return hash((self.year, self.quarter))
+    
+    def __repr__(self):
+        return f"{self.year} Q{self.quarter}"
 
 class CacheManager:
     def __init__(self, cache_directory: str = "/.cache/"):
@@ -103,42 +147,73 @@ def get_quarters_to_query(datetimes: list[datetime]) -> list[Quarter]:
 
     return quarters
 
-def get_quarters(quarters: list[Quarter], cache: CacheManager) -> list[Quarter]:
+def get_quarters(site, quarters: list[Quarter], cache: CacheManager) -> list[Quarter]:
     # for each quarter, first check the cache, then query the API for the 1st day of the quarter
     for quarter in quarters:
-        jsonData = cache.get_from_cache(quarter)
+        jsonData = cache.check_exists(quarter)
         if jsonData:
             continue
         # Query the API
-        response = req.get(API.query("0113A", quarter.year, quarter.quarter * 3 - 2, 1))
+        response = req.get(API.query(site, quarter.year, quarter.quarter * 3 - 2, 1))
         cache.write_to_cache(quarter, response.text)
 
     return quarters
 
-def interpolate_tidal_heights(datetimes: list[datetime], cache: CacheManager):
-    results: dict[datetime, float] = {}
-    
-    quarters = get_quarters_to_query(datetimes)
-    quarters = get_quarters(quarters, cache)
-
-
-    # Interpolate the tidal heights
-    for dt in datetimes:
-        datapackage = cache.get_from_cache(datetime_to_quarter(dt))
-        if not datapackage:
-            raise ValueError("Data package not found in cache.")
-        # interpolate the tidal height for the datetime dt
-        height = datapackage.get_tidal_height(dt)
-        results[dt] = height
 
 class Client:
     def __init__(self, cache_path: str = "/.cache/", site: str = "Chelsea Bridge"):
         self.cache = CacheManager(cache_path)
         self.site = site
 
+
+
+    def get_entry_list(self, quarters: list[Quarter]) -> list[TideEntry]:
+        entry_list = []
+        for quarter in quarters:
+            data = self.cache.get_from_cache(quarter)
+            if not data:
+                raise ValueError(f"Data for {quarter} not found in cache.")
+            entries = data.parse()
+            assert len(entries) > 0, f"No entries found for {quarter}."
+            entry_list.extend(entries)
+
+        return entry_list
+
+
+
+
+    def interpolate_tidal_heights(self, entries: list[TideEntry], datetimes: list[datetime]) -> dict[datetime, float]:
+        results: dict[datetime, float] = {}
+        for dt in datetimes:
+            # Find the two closest entries, smaller and greater than the datetime
+            sntd = 99999 # some number that's too big
+            sptd = 99999
+            earlier_tide_point: TideEntry = entries[0]
+            later_tide_point: TideEntry = entries[1]
+            for entry in entries:
+                delta = (dt - entry.time).total_seconds()
+                if delta < 0 and abs(delta) < sntd:
+                    sntd = abs(delta)
+                    earlier_tide_point = entry
+                elif delta > 0 and abs(delta) < sptd:
+                    sptd = abs(delta)
+                    later_tide_point = entry
+            # interpolate linearly between the two closest entries
+            gradient = (later_tide_point.height - earlier_tide_point.height) / (later_tide_point.time - earlier_tide_point.time).total_seconds()
+            height = gradient * (dt - earlier_tide_point.time).total_seconds() + earlier_tide_point.height
+
+            results[dt] = height
+        return results
+    
     def run(self):
         datetimes = self.load_input_datetimes()
-        interpolate_tidal_heights(datetimes, self.cache)
+        # convert to quarters
+        quartersToQuery = get_quarters_to_query(datetimes)
+        quarters = get_quarters(self.site, quartersToQuery, self.cache)
+        entry_list = self.get_entry_list(quarters)
+        results = self.interpolate_tidal_heights(entry_list, datetimes)
+        for dt, height in results.items():
+            print(f"{dt}: {height}m")
 
     @staticmethod
     def load_input_datetimes(input_file: str = "input.txt"):
@@ -147,6 +222,13 @@ class Client:
             # format is: '2021-02-12T10:01:01.000Z\n'
             datetimes = [datetime.strptime(dstr.strip(), "%Y-%m-%dT%H:%M:%S.%fZ") for dstr in datetime_strings]
         return datetimes
+    
+    def get_tidal_height(self, datetime: datetime) -> float:
+        queryQuarter = datetime_to_quarter(datetime)
+        assert queryQuarter.year == int()
+        
+        # get the two nearest times to the datetime (before and after)
+        return 0.0
 
 if __name__ == "__main__":
     print("Hello world")

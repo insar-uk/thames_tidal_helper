@@ -3,8 +3,8 @@ from datetime import datetime
 from thames_tidal_helper.Client import Client, Quarter
 import os
 import shutil
-CACHE_TEST_PATH = "test/.cache/"
-EXAMPLE_FILE = "test/example_data.json"
+import json
+from conftest import CACHE_TEST_PATH, EXAMPLE_FILE
 
 @pytest.fixture
 def wipe_cache_at_end():
@@ -27,5 +27,9 @@ def test_cache(wipe_cache_at_end):
     quarter = Quarter(2014, 1)
     client.cache.write_to_cache(quarter, data)
     assert client.cache.check_exists(quarter)
+
+    # read the data back from the cache
+    cached_data = client.cache.get_from_cache(quarter)
+    assert cached_data is not None
     
 
