@@ -73,6 +73,8 @@ class DataManager:
         def quarter_to_month(q: int) -> int:
             return q * 3 - 2
 
+        # Sort the quarters by year and quarter
+        quarters.sort()
         for quarter in quarters:
             if self.check_exists(site, quarter):
                 continue
