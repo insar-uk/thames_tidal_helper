@@ -39,11 +39,10 @@ python -m thames_tidal_helper --input input.txt --output output.txt --site "Chel
 
 - `--input` (default: `input.txt`)
 
-The input file is a line-separated list of datetimess in the format `YYYY-MM-DDTHH:MM:SSZ`. The script will query and interpolate the tidal data for each of these times.
+The input file is a line-separated list of datetimess in the format `YYYY-MM-DD HH:MM:SS`. The script will query and interpolate the tidal data for each of these times.
 
 - `--output` (default: `output.txt`)
-
-The tidal heights will be written to this file in the format `2020-05-02T10:01:01Z 1.23`. Where `1.23` is the tidal height in meters at the queried datetime `2020-05-02T10:01:01Z`.
+The tidal heights will be written to this file in the format `2020-05-02 10:01:01, 1.23`. Where `1.23` is the tidal height in meters at the queried datetime `2020-05-02 10:01:01`.
 
 - `--site` (default: `"Chelsea Bridge"`)
 
