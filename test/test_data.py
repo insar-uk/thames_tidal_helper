@@ -1,6 +1,8 @@
-from thames_tidal_helper.Client import DataPackage
-from conftest import EXAMPLE_FILE
 from datetime import datetime
+
+from conftest import EXAMPLE_FILE
+from thames_tidal_helper.Client import DataPackage
+
 
 def test_data_package():
     with open(EXAMPLE_FILE, "r") as file:
@@ -9,6 +11,7 @@ def test_data_package():
     dp = DataPackage(data)
     assert dp.data == data
 
+
 def test_parse():
     with open(EXAMPLE_FILE, "r") as file:
         data = file.read()
@@ -16,4 +19,3 @@ def test_parse():
     dp = DataPackage(data)
     parsed = dp.parse()
     print(parsed)
-    

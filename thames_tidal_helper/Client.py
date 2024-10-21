@@ -1,8 +1,8 @@
-import sys
-from datetime import datetime
-import requests as req
 import json
 import os
+from datetime import datetime
+
+import requests as req
 
 
 class API:

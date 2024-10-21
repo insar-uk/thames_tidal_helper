@@ -1,12 +1,14 @@
-import pytest
+import os
 from datetime import datetime
+
+import pytest
+
 from thames_tidal_helper.Client import (
     Client,
     datetime_to_quarter,
     CalendarQuarter,
     get_quarters_to_query,
 )
-import os
 
 
 @pytest.fixture
