@@ -9,10 +9,10 @@ from thames_tidal_helper.client import (
 )
 
 
-@pytest.fixture
+@pytest.fixture(scope="module", autouse=True)
 def example_file():
     example_file = "test/example_file.txt"
-    example_string = "2021-01-01T12:00:00.000Z\n2021-01-02T12:42:00.000Z\n"
+    example_string = "2021-01-01 12:00:00\n2021-01-02 12:42:00\n"
     with open(example_file, "w") as file:
         file.write(example_string)
     assert os.path.exists(example_file)
@@ -24,7 +24,7 @@ def example_file():
 def test_read_file(example_file):
     """Read a file with datetimes"""
     example_file = "test/example_file.txt"
-    example_string = "2021-01-01T12:00:00.000Z\n2021-01-02T12:42:00.000Z\n"
+    example_string = "2021-01-01 12:00:00\n2021-01-02 12:42:00\n"
     with open(example_file, "w") as file:
         file.write(example_string)
 

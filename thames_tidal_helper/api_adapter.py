@@ -23,14 +23,29 @@ class API:
     }
 
     @staticmethod
-    def query_url(site: str, year: int, month: int, day: int):
-        """Return the URL to query the API for a specific date and named site"""
+    def site_to_code(site: str) -> str:
+        """Return the site code for a named site"""
         try:
             gauge = next(gauge for gauge in API.TIDAL_GAUGES if gauge.name == site)
-            site_code = gauge.code
-        except KeyError:
+            return gauge.code
+        except StopIteration:
             raise ValueError(
                 f"Site code for {site} not found. Please add it to the API.SITES list."
             )
 
+    @staticmethod
+    def code_to_site(code: str) -> str:
+        """Return the site name for a site code"""
+        try:
+            gauge = next(gauge for gauge in API.TIDAL_GAUGES if gauge.code == code)
+            return gauge.name
+        except StopIteration:
+            raise ValueError(
+                f"Site name for {code} not found. Please add it to the API.SITES list."
+            )
+
+    @staticmethod
+    def query_url(site: str, year: int, month: int, day: int):
+        """Return the URL to query the API for a specific date and named site"""
+        site_code = API.site_to_code(site)
         return f"{API.root}{site_code}/{year}/{month}/{day}/0/1/"

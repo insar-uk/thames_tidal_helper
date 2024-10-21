@@ -16,29 +16,24 @@ class TideEntry:
         return self.__str__()
 
 
-# Type hints for the PLA data format
-
-
 class TideEntryDict(TypedDict):
+    """Type hints for the PLA data entry format"""
+
     Day: int
     Time: str  # format '1310' for 10 minutes past 1pm
     Height: str  # format '1.23'
-    Type: int
+    Type: int  # 0 for low, 1 for high
 
 
 class MonthData(TypedDict):
+    """Type hints for the PLA month data format"""
+
     name: str
-    rows: dict[int, list[TideEntryDict]]
+    rows: dict[str, list[TideEntryDict]]
 
 
-TableType = dict[int, MonthData]
-
-
-class DataPackage:
-    def __init__(self, data: str):
-        self.data = data
-        self.json_data = load_json(data)
-        self.table: TableType = self.json_data["table"]
+""" Type hint for the PLA table format """
+TableType = dict[str, MonthData]
 
 
 def validate_table(table: TableType) -> bool:
@@ -51,8 +46,8 @@ def validate_table(table: TableType) -> bool:
             month_data["rows"], dict
         ):
             return False
-        for day, entries in month_data["rows"].items():
-            if not isinstance(day, int) or not isinstance(entries, list):
+        for day_key, entries in month_data["rows"].items():
+            if not isinstance(entries, list):
                 return False
             for entry in entries:
                 if not isinstance(entry, dict):
@@ -73,10 +68,23 @@ def validate_table(table: TableType) -> bool:
                     return False
         return True
 
+    if len(table.values()) == 0:
+        return False  # table should have at least one month
+
     for month_data in table.values():
         if not validate_month_data(month_data):
             return False
     return True
+
+
+class DataPackage:
+    def __init__(self, data: str):
+        self.data = data
+        self.json_data = load_json(data)
+        self.table: TableType = self.json_data["table"]
+
+        if not validate_table(self.table):
+            raise ValueError("Data is not in the correct format")
 
 
 def parse_data_package(data_package: DataPackage) -> list[TideEntry]:
@@ -93,7 +101,7 @@ def parse_data_package(data_package: DataPackage) -> list[TideEntry]:
         for _, day_data in month_data["rows"].items():
             # go through each entry in the day
             for entry in day_data:
-                day = entry["Day"]
+                day = int(entry["Day"])
                 hour = int(entry["Time"][:2])
                 minute = int(entry["Time"][2:])
                 # time is in the format '2010' for 10 minutes past 8pm
