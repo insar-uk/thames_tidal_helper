@@ -242,14 +242,3 @@ class Client:
                 for dstr in datetime_strings
             ]
         return datetimes
-
-    def get_tidal_height(self, datetime: datetime) -> float:
-        queryQuarter = datetime_to_quarter(datetime)
-        assert queryQuarter.year == int()
-
-        # get the two nearest times to the datetime (before and after)
-        return 0.0
-
-
-if __name__ == "__main__":
-    print("Hello world")
