@@ -128,6 +128,11 @@ class CalendarQuarter:
     def __repr__(self) -> str:
         return f"{self.year} Q{self.quarter}"
 
+    def __lt__(self, other: Self) -> bool:
+        if self.year == other.year and self.quarter < other.quarter:
+            return True
+        return self.year < other.year
+
     @staticmethod
     def from_datetime(dt: datetime):
         year = dt.year
