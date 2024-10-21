@@ -46,7 +46,7 @@ The tidal heights will be written to this file in the format `2020-05-02 10:01:0
 
 - `--site` (default: `"Chelsea Bridge"`)
 
-The PLA has numerous tidal monitoring sites along the Thames. This option allows you to specify which site to query. The default is `"Chelsea Bridge"`. See http://tidepredictions.pla.co.uk/ for a list of available sites or check Sites.py as some might not be implemented.
+The PLA has numerous tidal monitoring sites along the Thames. This option allows you to specify which site to query. The default is `"Chelsea Bridge"`. See http://tidepredictions.pla.co.uk/ for a list of available sites or check ["api_adapter.py"](./thames_tidal_helper/api_adapter.py) as some might not be implemented.
 
 ## The endpoint
 
