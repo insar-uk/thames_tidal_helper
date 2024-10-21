@@ -4,7 +4,8 @@ import shutil
 import pytest
 
 from conftest import CACHE_TEST_PATH, EXAMPLE_FILE
-from thames_tidal_helper.Client import Client, CalendarQuarter
+from thames_tidal_helper.data_manager import DataManager
+from thames_tidal_helper.schema import CalendarQuarter
 
 
 @pytest.fixture
@@ -16,7 +17,7 @@ def wipe_cache_at_end():
 
 def test_cache(wipe_cache_at_end):
     assert not os.path.exists(CACHE_TEST_PATH)
-    client = Client(cache_path=CACHE_TEST_PATH)
+    data_manager = DataManager(CACHE_TEST_PATH)
     assert os.path.exists(CACHE_TEST_PATH)
 
     # read in the example data from the file
@@ -27,9 +28,9 @@ def test_cache(wipe_cache_at_end):
 
     # add the data to the cache
     quarter = CalendarQuarter(2014, 1)
-    client.cache.write_to_cache(quarter, data)
-    assert client.cache.check_exists(quarter)
+    data_manager.write_to_cache(quarter, data)
+    assert data_manager.check_exists(quarter)
 
     # read the data back from the cache
-    cached_data = client.cache.get_from_cache(quarter)
+    cached_data = data_manager.get_from_cache(quarter)
     assert cached_data is not None

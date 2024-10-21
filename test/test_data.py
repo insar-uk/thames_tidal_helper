@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from conftest import EXAMPLE_FILE
-from thames_tidal_helper.Client import DataPackage
+from thames_tidal_helper.schema import DataPackage, parse_data_package
 
 
 def test_data_package():
@@ -17,5 +17,5 @@ def test_parse():
         data = file.read()
     assert data is not None
     dp = DataPackage(data)
-    parsed = dp.parse()
+    parsed = parse_data_package(dp)
     print(parsed)

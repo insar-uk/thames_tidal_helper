@@ -3,11 +3,9 @@ from datetime import datetime
 
 import pytest
 
-from thames_tidal_helper.Client import (
+from thames_tidal_helper.client import (
     Client,
-    datetime_to_quarter,
     CalendarQuarter,
-    get_quarters_to_query,
 )
 
 
@@ -45,23 +43,9 @@ def test_read_file(example_file):
 def test_datetime_to_quarter():
     """Test the datetime to quarter conversion"""
     dt = datetime(2021, 2, 21)
-    quarter: CalendarQuarter = datetime_to_quarter(dt)
+    quarter: CalendarQuarter = CalendarQuarter.from_datetime(dt)
     assert (
         quarter.year == 2021 and quarter.quarter == 1
     ), "Datetime should match the input"
 
 
-def test_get_quarters_to_query():
-    """Test the get_quarters_to_query function"""
-    datetimes = [datetime(2021, 2, 21), datetime(2021, 2, 21)]
-    quarters = get_quarters_to_query(datetimes)
-    assert len(quarters) == 1, "Should be only 1 quarter for both dates"
-
-    datetimes.append(datetime(2021, 1, 21))
-    datetimes.append(datetime(2021, 3, 21))
-    quarters = get_quarters_to_query(datetimes)
-    assert len(quarters) == 1, "Should be only 1 quarter for all dates"
-
-    datetimes.append(datetime(2021, 4, 21))
-    quarters = get_quarters_to_query(datetimes)
-    assert len(quarters) == 2

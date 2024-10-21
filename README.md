@@ -58,3 +58,12 @@ The endpoint is as follows:
 Where `<SITE>` is the a code for the monitoring site (e.g. `Chelsea Bridge -> 0113A`), and `<YEAR>`, `<MONTH>`, `<DAY>` are the date of the query specified with trailing zeros e.g. '2020', '05', '02'.
 
 In practice however the enpoint returns a json object containing a table with 3 months of data. So we only bother querying each quarter in the range of dates specified. The responses are cached in the `/.cache` directory and used in leiu of querying the endpoint again.
+
+## Development
+
+Format with Black. Test with pytest.
+
+``` bash
+coverage run -m pytest
+coverage report -m > coverage.txt
+```
