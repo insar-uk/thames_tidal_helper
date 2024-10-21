@@ -47,5 +47,3 @@ def test_datetime_to_quarter():
     assert (
         quarter.year == 2021 and quarter.quarter == 1
     ), "Datetime should match the input"
-
-
