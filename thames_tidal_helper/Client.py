@@ -4,6 +4,7 @@ import requests as req
 import json
 import os
 
+
 class API:
     root = "https://tidepredictions.pla.co.uk/gauge_data/"
 
@@ -17,10 +18,13 @@ class API:
         try:
             site_code = API.site_codes[site]
         except KeyError:
-            raise ValueError(f"Site code for {site} not found. Please add it to the API.site_codes dictionary.")
-        
+            raise ValueError(
+                f"Site code for {site} not found. Please add it to the API.site_codes dictionary."
+            )
+
         return f"{API.root}{site_code}/{year}/{month}/{day}/0/1/"
-    
+
+
 class TideEntry:
     def __init__(self, time: datetime, type: str, height: float):
         self.time = time
@@ -29,9 +33,10 @@ class TideEntry:
 
     def __str__(self) -> str:
         return f"{self.time}: {self.type} - {self.height}m"
-    
+
     def __repr__(self) -> str:
         return self.__str__()
+
 
 class DataPackage:
     def __init__(self, data: str):
@@ -40,15 +45,15 @@ class DataPackage:
         self.table = self.json_data["table"]
 
     def parse(self) -> list[TideEntry]:
-        entries = []    
+        entries = []
         # go through each month in the table
         for _, month_data in self.table.items():
             # get the month and year from 'month['name']' which is in the format 'January 2021'
-            month_str, year_str = month_data['name'].split(" ")
+            month_str, year_str = month_data["name"].split(" ")
             # convert the month to a number
             month = datetime.strptime(month_str, "%B").month
             year = int(year_str)
-            
+
             # go through each day in the month
             for _, day_data in month_data["rows"].items():
                 # go through each entry in the day
@@ -58,14 +63,12 @@ class DataPackage:
                     minute = int(entry["Time"][2:])
                     # time is in the format '2010' for 10 minutes past 8pm
                     time = datetime(year, month, day, hour, minute)
-                    height = float(entry["Height"])
+                    height_str = entry["Height"].replace("m", "")
+                    height = float(height_str)
                     type = "LOW" if entry["Type"] == 0 else "HIGH"
                     entries.append(TideEntry(time, type, height))
 
         return entries
-
-
-
 
 
 class Quarter:
@@ -75,12 +78,13 @@ class Quarter:
 
     def __eq__(self, other):
         return self.year == other.year and self.quarter == other.quarter
-    
+
     def __hash__(self):
         return hash((self.year, self.quarter))
-    
+
     def __repr__(self):
         return f"{self.year} Q{self.quarter}"
+
 
 class CacheManager:
     def __init__(self, cache_directory: str = "/.cache/"):
@@ -89,10 +93,16 @@ class CacheManager:
 
         if not os.path.exists(cache_directory):
             os.mkdir(cache_directory)
+        else:
+            # load the contents of the cache
+            for filename in os.listdir(cache_directory):
+                year, quarter = filename.split("_Q")
+                quarter = quarter.split(".")[0]
+                self.contents.append(Quarter(int(year), int(quarter)))
 
     def quarter_to_filename(self, quarter: Quarter) -> str:
         return f"{quarter.year}_Q{quarter.quarter}.json"
-    
+
     def check_exists(self, quarter: Quarter) -> bool:
         filename = self.quarter_to_filename(quarter)
         filepath = os.path.join(self.cache_directory, filename)
@@ -101,8 +111,9 @@ class CacheManager:
         if os.path.exists(filepath):
             return True
         else:
-            raise FileNotFoundError(f"File {filepath} was expected to exist but was not found.")
-        
+            raise FileNotFoundError(
+                f"File {filepath} was expected to exist but was not found."
+            )
 
     def get_from_cache(self, quarter: Quarter) -> DataPackage | None:
         filename = self.quarter_to_filename(quarter)
@@ -112,15 +123,13 @@ class CacheManager:
         with open(filepath, "r") as file:
             contents = file.read()
             return DataPackage(contents)
-        
+
     def write_to_cache(self, quarter: Quarter, data: str):
         filename = self.quarter_to_filename(quarter)
         filepath = os.path.join(self.cache_directory, filename)
         with open(filepath, "w") as file:
             file.write(data)
         self.contents.append(quarter)
-
-    
 
     def wipe_cache(self):
         for quarter in self.contents:
@@ -129,23 +138,24 @@ class CacheManager:
         self.contents = []
 
 
-
 def datetime_to_quarter(dt: datetime) -> Quarter:
     year = dt.year
     month = dt.month
     quarter = (month - 1) // 3 + 1
     return Quarter(year, quarter)
 
+
 def get_quarters_to_query(datetimes: list[datetime]) -> list[Quarter]:
     # Parse through each date
     quarters = []
     for dt in datetimes:
         quarters.append(datetime_to_quarter(dt))
-    
+
     # Remove duplicates
     quarters = list(set(quarters))
 
     return quarters
+
 
 def get_quarters(site, quarters: list[Quarter], cache: CacheManager) -> list[Quarter]:
     # for each quarter, first check the cache, then query the API for the 1st day of the quarter
@@ -161,11 +171,9 @@ def get_quarters(site, quarters: list[Quarter], cache: CacheManager) -> list[Qua
 
 
 class Client:
-    def __init__(self, cache_path: str = "/.cache/", site: str = "Chelsea Bridge"):
+    def __init__(self, cache_path: str = "./.cache/", site: str = "Chelsea Bridge"):
         self.cache = CacheManager(cache_path)
         self.site = site
-
-
 
     def get_entry_list(self, quarters: list[Quarter]) -> list[TideEntry]:
         entry_list = []
@@ -179,14 +187,13 @@ class Client:
 
         return entry_list
 
-
-
-
-    def interpolate_tidal_heights(self, entries: list[TideEntry], datetimes: list[datetime]) -> dict[datetime, float]:
+    def interpolate_tidal_heights(
+        self, entries: list[TideEntry], datetimes: list[datetime]
+    ) -> dict[datetime, float]:
         results: dict[datetime, float] = {}
         for dt in datetimes:
             # Find the two closest entries, smaller and greater than the datetime
-            sntd = 99999 # some number that's too big
+            sntd = 99999  # some number that's too big
             sptd = 99999
             earlier_tide_point: TideEntry = entries[0]
             later_tide_point: TideEntry = entries[1]
@@ -199,12 +206,17 @@ class Client:
                     sptd = abs(delta)
                     later_tide_point = entry
             # interpolate linearly between the two closest entries
-            gradient = (later_tide_point.height - earlier_tide_point.height) / (later_tide_point.time - earlier_tide_point.time).total_seconds()
-            height = gradient * (dt - earlier_tide_point.time).total_seconds() + earlier_tide_point.height
+            gradient = (later_tide_point.height - earlier_tide_point.height) / (
+                later_tide_point.time - earlier_tide_point.time
+            ).total_seconds()
+            height = (
+                gradient * (dt - earlier_tide_point.time).total_seconds()
+                + earlier_tide_point.height
+            )
 
             results[dt] = height
         return results
-    
+
     def run(self):
         datetimes = self.load_input_datetimes()
         # convert to quarters
@@ -213,22 +225,31 @@ class Client:
         entry_list = self.get_entry_list(quarters)
         results = self.interpolate_tidal_heights(entry_list, datetimes)
         for dt, height in results.items():
-            print(f"{dt}: {height}m")
+            print(f"{dt}, {height}")
+
+        with open("output.txt", "w") as file:
+            file.write("Datetime, Tidal Height (m)\n")
+            for dt, height in results.items():
+                file.write(f"{dt}, {height}\n")
 
     @staticmethod
     def load_input_datetimes(input_file: str = "input.txt"):
         with open(input_file, "r") as file:
             datetime_strings: list[str] = file.readlines()
             # format is: '2021-02-12T10:01:01.000Z\n'
-            datetimes = [datetime.strptime(dstr.strip(), "%Y-%m-%dT%H:%M:%S.%fZ") for dstr in datetime_strings]
+            datetimes = [
+                datetime.strptime(dstr.strip(), "%Y-%m-%dT%H:%M:%S.%fZ")
+                for dstr in datetime_strings
+            ]
         return datetimes
-    
+
     def get_tidal_height(self, datetime: datetime) -> float:
         queryQuarter = datetime_to_quarter(datetime)
         assert queryQuarter.year == int()
-        
+
         # get the two nearest times to the datetime (before and after)
         return 0.0
+
 
 if __name__ == "__main__":
     print("Hello world")
