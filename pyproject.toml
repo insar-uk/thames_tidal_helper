@@ -24,3 +24,6 @@ dependencies = [
 
 [tool.setuptools]
 package-dir = { "" = "thames_tidal_helper" }
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
