@@ -12,7 +12,10 @@ from thames_tidal_helper.schema import TideEntry
 def interpolate_tidal_heights(
     entries: list[TideEntry], datetimes: list[datetime]
 ) -> dict[datetime, float]:
-    """Linearly interpolate tidal heights for a list of given datetimes, using a list of known TideEntries (height + datetime)."""
+    """
+    Linearly interpolate tidal heights for a list of given datetimes,
+    using a list of known TideEntries (height + datetime).
+    """
     results: dict[datetime, float] = {}
     for dt in datetimes:
         # Find the two closest entries, smaller and greater than the datetime

@@ -26,7 +26,7 @@ def example_data():
 
 def test_cache_directory(wipe_cache):
     assert not os.path.exists(CACHE_TEST_PATH)
-    data_manager = DataManager(CACHE_TEST_PATH)
+    _ = DataManager(CACHE_TEST_PATH)
     assert os.path.exists(CACHE_TEST_PATH)
 
 
@@ -117,7 +117,7 @@ def test_retrieve_data(wipe_cache, example_data):
     quarter = CalendarQuarter(2014, 1)
     assert not data_manager.check_exists(site, quarter)
     data_manager.write_to_cache(site, quarter, example_data)
-    data = data_manager.get_quarters("Chelsea Bridge", [quarter])
+    _ = data_manager.get_quarters("Chelsea Bridge", [quarter])
     # Now check that the data is in the cache
     assert data_manager.check_exists(site, quarter)
 

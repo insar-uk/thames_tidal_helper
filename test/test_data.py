@@ -119,6 +119,10 @@ def test_validate_table_missing_entry_keys():
 
 
 def test_validate_table_invalid_entry_key_types():
-    json_table_invalid_entry_key_types = """{"2021-01": {"name": "January 2021", "rows": {"1": [{"Day": "invalid_day", "Time": 123, "Height": 5.0, "Type": "invalid_type"}]}}}"""
+    json_table_invalid_entry_key_types = (
+        """{"2021-01": {"name": "January 2021", "rows": {"1": 
+        [{"Day": "invalid_day", "Time": 123, "Height": 5.0, 
+        "Type": "invalid_type"}]}}}"""
+    )
     table_invalid_entry_key_types = json_loads(json_table_invalid_entry_key_types)
     assert not validate_table(table_invalid_entry_key_types)
