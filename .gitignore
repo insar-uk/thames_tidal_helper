@@ -14,3 +14,5 @@ test/__pycache__/
 thames_tidal_helper/__pycache__/
 .pytest_cache/
 
+# Coverage binary output
+.coverage
