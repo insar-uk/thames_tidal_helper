@@ -71,7 +71,7 @@ class DataPackage:
         return entries
 
 
-class Quarter:
+class CalendarQuarter:
     def __init__(self, year: int, quarter: int):
         self.year = year
         self.quarter = quarter
@@ -89,7 +89,7 @@ class Quarter:
 class CacheManager:
     def __init__(self, cache_directory: str = "/.cache/"):
         self.cache_directory = cache_directory
-        self.contents: list[Quarter] = []
+        self.contents: list[CalendarQuarter] = []
 
         if not os.path.exists(cache_directory):
             os.mkdir(cache_directory)
@@ -98,12 +98,12 @@ class CacheManager:
             for filename in os.listdir(cache_directory):
                 year, quarter = filename.split("_Q")
                 quarter = quarter.split(".")[0]
-                self.contents.append(Quarter(int(year), int(quarter)))
+                self.contents.append(CalendarQuarter(int(year), int(quarter)))
 
-    def quarter_to_filename(self, quarter: Quarter) -> str:
+    def quarter_to_filename(self, quarter: CalendarQuarter) -> str:
         return f"{quarter.year}_Q{quarter.quarter}.json"
 
-    def check_exists(self, quarter: Quarter) -> bool:
+    def check_exists(self, quarter: CalendarQuarter) -> bool:
         filename = self.quarter_to_filename(quarter)
         filepath = os.path.join(self.cache_directory, filename)
         if quarter not in self.contents:
@@ -115,7 +115,7 @@ class CacheManager:
                 f"File {filepath} was expected to exist but was not found."
             )
 
-    def get_from_cache(self, quarter: Quarter) -> DataPackage | None:
+    def get_from_cache(self, quarter: CalendarQuarter) -> DataPackage | None:
         filename = self.quarter_to_filename(quarter)
         filepath = os.path.join(self.cache_directory, filename)
         if quarter not in self.contents:
@@ -124,7 +124,7 @@ class CacheManager:
             contents = file.read()
             return DataPackage(contents)
 
-    def write_to_cache(self, quarter: Quarter, data: str):
+    def write_to_cache(self, quarter: CalendarQuarter, data: str):
         filename = self.quarter_to_filename(quarter)
         filepath = os.path.join(self.cache_directory, filename)
         with open(filepath, "w") as file:
@@ -138,14 +138,14 @@ class CacheManager:
         self.contents = []
 
 
-def datetime_to_quarter(dt: datetime) -> Quarter:
+def datetime_to_quarter(dt: datetime) -> CalendarQuarter:
     year = dt.year
     month = dt.month
     quarter = (month - 1) // 3 + 1
-    return Quarter(year, quarter)
+    return CalendarQuarter(year, quarter)
 
 
-def get_quarters_to_query(datetimes: list[datetime]) -> list[Quarter]:
+def get_quarters_to_query(datetimes: list[datetime]) -> list[CalendarQuarter]:
     # Parse through each date
     quarters = []
     for dt in datetimes:
@@ -157,14 +157,22 @@ def get_quarters_to_query(datetimes: list[datetime]) -> list[Quarter]:
     return quarters
 
 
-def get_quarters(site, quarters: list[Quarter], cache: CacheManager) -> list[Quarter]:
+def quarter_to_month(q: int) -> int:
+    return q * 3 - 2
+
+
+def get_quarters(
+    site, quarters: list[CalendarQuarter], cache: CacheManager
+) -> list[CalendarQuarter]:
     # for each quarter, first check the cache, then query the API for the 1st day of the quarter
     for quarter in quarters:
         jsonData = cache.check_exists(quarter)
         if jsonData:
             continue
         # Query the API
-        response = req.get(API.query(site, quarter.year, quarter.quarter * 3 - 2, 1))
+        response = req.get(
+            API.query(site, quarter.year, quarter_to_month(quarter.quarter) * 3 - 2, 1)
+        )
         cache.write_to_cache(quarter, response.text)
 
     return quarters
@@ -175,7 +183,7 @@ class Client:
         self.cache = CacheManager(cache_path)
         self.site = site
 
-    def get_entry_list(self, quarters: list[Quarter]) -> list[TideEntry]:
+    def get_entry_list(self, quarters: list[CalendarQuarter]) -> list[TideEntry]:
         entry_list = []
         for quarter in quarters:
             data = self.cache.get_from_cache(quarter)

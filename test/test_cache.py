@@ -1,6 +1,6 @@
 import pytest
 from datetime import datetime
-from thames_tidal_helper.Client import Client, Quarter
+from thames_tidal_helper.Client import Client, CalendarQuarter
 import os
 import shutil
 import json
@@ -24,7 +24,7 @@ def test_cache(wipe_cache_at_end):
     assert data is not None
 
     # add the data to the cache
-    quarter = Quarter(2014, 1)
+    quarter = CalendarQuarter(2014, 1)
     client.cache.write_to_cache(quarter, data)
     assert client.cache.check_exists(quarter)
 

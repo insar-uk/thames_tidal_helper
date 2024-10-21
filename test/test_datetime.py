@@ -3,7 +3,7 @@ from datetime import datetime
 from thames_tidal_helper.Client import (
     Client,
     datetime_to_quarter,
-    Quarter,
+    CalendarQuarter,
     get_quarters_to_query,
 )
 import os
@@ -43,7 +43,7 @@ def test_read_file(example_file):
 def test_datetime_to_quarter():
     """Test the datetime to quarter conversion"""
     dt = datetime(2021, 2, 21)
-    quarter: Quarter = datetime_to_quarter(dt)
+    quarter: CalendarQuarter = datetime_to_quarter(dt)
     assert (
         quarter.year == 2021 and quarter.quarter == 1
     ), "Datetime should match the input"
